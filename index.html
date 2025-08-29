@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Saxophone</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298, #8b5fbf);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #ffd700, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .saxophone-container {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .saxophone {
+            width: 300px;
+            height: 500px;
+            position: relative;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+
+        .sax-body {
+            width: 120px;
+            height: 400px;
+            background: linear-gradient(45deg, #DAA520, #B8860B, #CD853F);
+            border-radius: 60px;
+            position: absolute;
+            left: 50px;
+            top: 50px;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.3);
+        }
+
+        .sax-neck {
+            width: 40px;
+            height: 150px;
+            background: linear-gradient(45deg, #DAA520, #B8860B);
+            border-radius: 20px;
+            position: absolute;
+            left: 80px;
+            top: 10px;
+            transform: rotate(-15deg);
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3);
+        }
+
+        .sax-bell {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #DAA520, #B8860B);
+            border-radius: 50%;
+            position: absolute;
+            left: 130px;
+            top: 370px;
+            box-shadow: inset -8px -8px 15px rgba(0,0,0,0.3);
+        }
+
+        .mouthpiece {
+            width: 15px;
+            height: 40px;
+            background: #2c2c2c;
+            border-radius: 7px;
+            position: absolute;
+            left: 85px;
+            top: -5px;
+            transform: rotate(-15deg);
+        }
+
+        .key {
+            position: absolute;
+            background: linear-gradient(45deg, #C0C0C0, #A9A9A9);
+            border: 2px solid #696969;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2c2c2c;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .key:hover {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255,215,0,0.4);
+        }
+
+        .key:active, .key.active {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Key positions */
+        .key-c { width: 35px; height: 35px; left: 40px; top: 120px; }
+        .key-d { width: 35px; height: 35px; left: 85px; top: 140px; }
+        .key-e { width: 35px; height: 35px; left: 130px; top: 160px; }
+        .key-f { width: 35px; height: 35px; left: 40px; top: 180px; }
+        .key-g { width: 35px; height: 35px; left: 85px; top: 200px; }
+        .key-a { width: 35px; height: 35px; left: 130px; top: 220px; }
+        .key-b { width: 35px; height: 35px; left: 40px; top: 240px; }
+        .key-c2 { width: 35px; height: 35px; left: 85px; top: 260px; }
+        .key-d2 { width: 35px; height: 35px; left: 130px; top: 280px; }
+        .key-e2 { width: 35px; height: 35px; left: 40px; top: 300px; }
+        .key-f2 { width: 35px; height: 35px; left: 85px; top: 320px; }
+        .key-g2 { width: 35px; height: 35px; left: 130px; top: 340px; }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .volume-slider {
+            width: 100px;
+            height: 5px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            max-width: 600px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .keyboard-hint {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .saxophone {
+                width: 250px;
+                height: 400px;
+                transform: scale(0.8);
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🎷 Interactive Saxophone 🎷</h1>
+    
+    <div class="saxophone-container">
+        <div class="saxophone">
+            <div class="sax-body"></div>
+            <div class="sax-neck"></div>
+            <div class="sax-bell"></div>
+            <div class="mouthpiece"></div>
+            
+            <!-- Saxophone Keys -->
+            <div class="key key-c" data-note="C4">C</div>
+            <div class="key key-d" data-note="D4">D</div>
+            <div class="key key-e" data-note="E4">E</div>
+            <div class="key key-f" data-note="F4">F</div>
+            <div class="key key-g" data-note="G4">G</div>
+            <div class="key key-a" data-note="A4">A</div>
+            <div class="key key-b" data-note="B4">B</div>
+            <div class="key key-c2" data-note="C5">C</div>
+            <div class="key key-d2" data-note="D5">D</div>
+            <div class="key key-e2" data-note="E5">E</div>
+            <div class="key key-f2" data-note="F5">F</div>
+            <div class="key key-g2" data-note="G5">G</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="startAudio()">Start Audio</button>
+        <button class="control-btn" onclick="stopAllNotes()">Stop All</button>
+        <div class="volume-control">
+            <span>Volume:</span>
+            <input type="range" class="volume-slider" min="0" max="100" value="70" onchange="changeVolume(this.value)">
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>How to Play:</h3>
+        <p>🎵 Click the keys on the saxophone to play different notes</p>
+        <p>🎹 Use your computer keyboard: C, D, E, F, G, A, B keys</p>
+        <p>🔊 Adjust volume with the slider</p>
+        <p>▶️ Click "Start Audio" first to enable sound</p>
+        
+        <div class="keyboard-hint">
+            <strong>Keyboard Mapping:</strong><br>
+            C→C4, D→D4, E→E4, F→F4, G→G4, A→A4, B→B4<br>
+            Q→C5, W→D5, X→E5, R→F5, T→G5
+        </div>
+    </div>
+
+    <script>
+        let synth;
+        let activeNotes = new Set();
+        let audioStarted = false;
+
+        // Initialize the saxophone synthesizer
+        function initSynth() {
+            synth = new Tone.Synth({
+                oscillator: {
+                    type: "sawtooth"
+                },
+                envelope: {
+                    attack: 0.1,
+                    decay: 0.3,
+                    sustain: 0.7,
+                    release: 0.5,
+                },
+                filter: {
+                    Q: 6,
+                    type: "lowpass",
+                    rolloff: -24,
+                    frequency: 2000
+                },
+                filterEnvelope: {
+                    attack: 0.02,
+                    decay: 0.1,
+                    sustain: 0.8,
+                    release: 1.2,
+                    baseFrequency: 800,
+                    octaves: 2,
+                    exponent: 2
+                }
+            }).toDestination();
+
+            // Apply some effects for more realistic saxophone sound
+            const reverb = new Tone.Reverb({
+                decay: 2,
+                preDelay: 0.01
+            });
+            
+            const distortion = new Tone.Distortion(0.1);
+            
+            synth.chain(distortion, reverb, Tone.Destination);
+        }
+
+        async function startAudio() {
+            if (!audioStarted) {
+                await Tone.start();
+                initSynth();
+                audioStarted = true;
+                document.querySelector('.control-btn').textContent = 'Audio Ready!';
+                setTimeout(() => {
+                    document.querySelector('.control-btn').textContent = 'Start Audio';
+                }, 2000);
+            }
+        }
+
+        function playNote(note) {
+            if (!audioStarted || !synth) {
+                alert('Please click "Start Audio" first!');
+                return;
+            }
+            
+            if (!activeNotes.has(note)) {
+                synth.triggerAttack(note);
+                activeNotes.add(note);
+                
+                // Visual feedback
+                const keyElement = document.querySelector(`[data-note="${note}"]`);
+                if (keyElement) {
+                    keyElement.classList.add('active');
+                }
+            }
+        }
+
+        function stopNote(note) {
+            if (activeNotes.has(note) && synth) {
+                synth.triggerRelease();
+                activeNotes.delete(note);
+                
+                // Remove visual feedback
+                const keyElement = document.querySelector(`[data-note="${note}"]`);
+                if (keyElement) {
+                    keyElement.classList.remove('active');
+                }
+            }
+        }
+
+        function stopAllNotes() {
+            if (synth) {
+                synth.triggerRelease();
+                activeNotes.clear();
+                
+                // Remove all visual feedback
+                document.querySelectorAll('.key').forEach(key => {
+                    key.classList.remove('active');
+                });
+            }
+        }
+
+        function changeVolume(value) {
+            if (synth) {
+                synth.volume.value = Tone.gainToDb(value / 100);
+            }
+        }
+
+        // Add click event listeners to keys
+        document.querySelectorAll('.key').forEach(key => {
+            const note = key.dataset.note;
+            
+            key.addEventListener('mousedown', () => playNote(note));
+            key.addEventListener('mouseup', () => stopNote(note));
+            key.addEventListener('mouseleave', () => stopNote(note));
+            
+            // Touch events for mobile
+            key.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                playNote(note);
+            });
+            key.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopNote(note);
+            });
+        });
+
+        // Keyboard mapping
+        const keyMap = {
+            'c': 'C4', 'd': 'D4', 'e': 'E4', 'f': 'F4',
+            'g': 'G4', 'a': 'A4', 'b': 'B4',
+            'q': 'C5', 'w': 'D5', 'x': 'E5', 'r': 'F5', 't': 'G5'
+        };
+
+        document.addEventListener('keydown', (e) => {
+            const note = keyMap[e.key.toLowerCase()];
+            if (note && !e.repeat) {
+                playNote(note);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const note = keyMap[e.key.toLowerCase()];
+            if (note) {
+                stopNote(note);
+            }
+        });
+
+        // Prevent context menu on keys
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('contextmenu', e => e.preventDefault());
+        });
+    </script>
+</body>
+</html>
